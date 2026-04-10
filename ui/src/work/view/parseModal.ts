@@ -165,12 +165,12 @@ export class ParseModalComp implements VanComponent {
                         ? [
                             info.page.part.trim(),
                             `[${info.page.badge.trim()}]`,
-                            `[${cardTitle.trim()}]`,
+                            needSubfolder ? '' : `[${cardTitle.trim()}]`,
                             `[${videoFormatMap[info.info!.accept_quality[info.formatIndex.val]]}]`,
                             `[${formatSeconds(info.info!.dash.duration)}]`
                         ]
                         : [
-                            pagesLength == 1 ? workRoute.allSection.val[workRoute.sectionTabsActiveIndex.val].title : `[${cardTitle.trim()}]`,
+                            pagesLength == 1 ? (needSubfolder ? '' : workRoute.allSection.val[workRoute.sectionTabsActiveIndex.val].title) : (needSubfolder ? '' : `[${cardTitle.trim()}]`),
                             workRoute.sectionPages.val.length == 1 ? '' : `[${info.page.badge.trim()}]`,
                             info.page.part.trim(),
                             isVideoMode ? `[${owner}]` : '',
