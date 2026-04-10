@@ -133,51 +133,68 @@ export class ParseModalComp implements VanComponent {
         const selectedPlayInfos = this.allPlayInfo.val.filter(info => info.selected.val)
         const workRoute = this.option.workRoute
         this.downloadBtnDisabled.val = true
-        // 需要传递给服务器，需要创建下载任务的数据列表
-        createTask(selectedPlayInfos.map(info => {
-            const badgeNotNum = !info.page.badge.match(/^\d+$/)
-            const isVideoMode = workRoute.videoInfoCardMode.val == 'video'
-            const cardTitle = workRoute.videoInfoCardData.val.title
-            const owner = workRoute.videoInfoCardData.val.staff.length > 0
-                ? workRoute.videoInfoCardData.val.staff[0].split("[")[0].trim()
-                : workRoute.videoInfoCardData.val.owner.name.trim()
-            const activeVideoInfo = getActiveFormatVideo(info.info!, info.info!.accept_quality[info.formatIndex.val], this.preferredCodec.val)
-            const pagesLength = workRoute.videoInfoCardData.val.pages.length
 
-            return ({
-                bvid: info.page.bvid,
-                cid: info.page.cid,
-                cover: workRoute.videoInfoCardData.val.cover,
-                title: (badgeNotNum
-                    ? [
-                        info.page.part.trim(),
-                        `[${info.page.badge.trim()}]`,
-                        `[${cardTitle.trim()}]`,
-                        `[${videoFormatMap[info.info!.accept_quality[info.formatIndex.val]]}]`,
-                        `[${formatSeconds(info.info!.dash.duration)}]`
-                    ]
-                    : [
-                        pagesLength == 1 ? workRoute.allSection.val[workRoute.sectionTabsActiveIndex.val].title : `[${cardTitle.trim()}]`,
-                        workRoute.sectionPages.val.length == 1 ? '' : `[${info.page.badge.trim()}]`,
-                        info.page.part.trim(),
-                        isVideoMode ? `[${owner}]` : '',
-                        `[${videoFormatMap[info.info!.accept_quality[info.formatIndex.val]]}]`,
-                        `[${formatSeconds(info.info!.dash.duration)}]`
-                    ]).filter(p => p).join(' '),
-                format: info.info!.accept_quality[info.formatIndex.val],
-                owner,
-                audio: getAudioURL(info.info!, this.preferHiResAudio.val),
-                duration: info.info!.dash.duration,
-                downloadType: this.downloadType.val,
-                ...activeVideoInfo
-            })
-        })).then(() => {
-            workRoute.parseModal.hide()
-        }).catch(error => {
-            alert(error.message)
-        }).finally(() => {
-            this.downloadBtnDisabled.val = false
-        })
+        // 分批提交任务，每批 20 个
+        const batchSize = 20
+        const batches: typeof selectedPlayInfos[] = []
+        for (let i = 0; i < selectedPlayInfos.length; i += batchSize) {
+            batches.push(selectedPlayInfos.slice(i, i + batchSize))
+        }
+
+        const submitBatch = async (batch: typeof selectedPlayInfos) => {
+            return createTask(batch.map(info => {
+                const badgeNotNum = !info.page.badge.match(/^\d+$/)
+                const isVideoMode = workRoute.videoInfoCardMode.val == 'video'
+                const cardTitle = workRoute.videoInfoCardData.val.title
+                const owner = workRoute.videoInfoCardData.val.staff.length > 0
+                    ? workRoute.videoInfoCardData.val.staff[0].split("[")[0].trim()
+                    : workRoute.videoInfoCardData.val.owner.name.trim()
+                const activeVideoInfo = getActiveFormatVideo(info.info!, info.info!.accept_quality[info.formatIndex.val], this.preferredCodec.val)
+                const pagesLength = workRoute.videoInfoCardData.val.pages.length
+
+                return ({
+                    bvid: info.page.bvid,
+                    cid: info.page.cid,
+                    cover: workRoute.videoInfoCardData.val.cover,
+                    title: (badgeNotNum
+                        ? [
+                            info.page.part.trim(),
+                            `[${info.page.badge.trim()}]`,
+                            `[${cardTitle.trim()}]`,
+                            `[${videoFormatMap[info.info!.accept_quality[info.formatIndex.val]]}]`,
+                            `[${formatSeconds(info.info!.dash.duration)}]`
+                        ]
+                        : [
+                            pagesLength == 1 ? workRoute.allSection.val[workRoute.sectionTabsActiveIndex.val].title : `[${cardTitle.trim()}]`,
+                            workRoute.sectionPages.val.length == 1 ? '' : `[${info.page.badge.trim()}]`,
+                            info.page.part.trim(),
+                            isVideoMode ? `[${owner}]` : '',
+                            `[${videoFormatMap[info.info!.accept_quality[info.formatIndex.val]]}]`,
+                            `[${formatSeconds(info.info!.dash.duration)}]`
+                        ]).filter(p => p).join(' '),
+                    format: info.info!.accept_quality[info.formatIndex.val],
+                    owner,
+                    audio: getAudioURL(info.info!, this.preferHiResAudio.val),
+                    duration: info.info!.dash.duration,
+                    downloadType: this.downloadType.val,
+                    ...activeVideoInfo
+                })
+            }))
+        }
+
+        // 串行提交各批次
+        (async () => {
+            try {
+                for (let i = 0; i < batches.length; i++) {
+                    await submitBatch(batches[i])
+                }
+                workRoute.parseModal.hide()
+            } catch (error) {
+                if (error instanceof Error) alert(error.message)
+            } finally {
+                this.downloadBtnDisabled.val = false
+            }
+        })()
     }
 
     ParseProgress() {

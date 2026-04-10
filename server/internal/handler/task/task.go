@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -26,49 +27,55 @@ func CreateTask(w http.ResponseWriter, r *http.Request) {
 		util.Res{Success: false, Message: "参数错误"}.Write(w)
 		return
 	}
-	db := store.MustGetDB()
-	defer db.Close()
-	for _, item := range body {
-		if !util.CheckBvidFormat(item.Bvid) {
-			util.Res{Success: false, Message: "bvid 格式错误"}.Write(w)
-			return
-		}
-		if item.Cover == "" || item.Title == "" || item.Owner == "" {
-			util.Res{Success: false, Message: "参数错误"}.Write(w)
-		}
 
-		if !util.IsValidURL(item.Cover) {
-			util.Res{Success: false, Message: "封面链接格式错误"}.Write(w)
-			return
+	// 异步处理任务创建
+	go func() {
+		db := store.MustGetDB()
+		defer db.Close()
+		for _, item := range body {
+			if !util.CheckBvidFormat(item.Bvid) {
+				log.Printf("bvid 格式错误: %s", item.Bvid)
+				continue
+			}
+			if item.Cover == "" || item.Title == "" || item.Owner == "" {
+				log.Printf("参数错误: bvid=%s", item.Bvid)
+				continue
+			}
+
+			if !util.IsValidURL(item.Cover) {
+				log.Printf("封面链接格式错误: bvid=%s", item.Bvid)
+				continue
+			}
+			if !util.IsValidURL(item.Audio) {
+				log.Printf("音频链接格式错误: bvid=%s", item.Bvid)
+				continue
+			}
+			if !util.IsValidURL(item.Video) {
+				log.Printf("视频链接格式错误: bvid=%s", item.Bvid)
+				continue
+			}
+			if !util.IsValidFormatCode(item.Format) {
+				log.Printf("清晰度代码错误: bvid=%s", item.Bvid)
+				continue
+			}
+			item.Folder, err = store.GetCurrentFolder(db)
+			item.Status = store.TaskStatusWaiting
+			if err != nil {
+				log.Printf("store.GetCurrentFolder: %v", err)
+				continue
+			}
+			_task := service.NewTask(&item)
+			_task.Title = util.FilterFileName(_task.Title)
+			err = _task.Create(db)
+			if err != nil {
+				log.Printf("_task.Create: %v", err)
+				continue
+			}
+			go _task.Start()
 		}
-		if !util.IsValidURL(item.Audio) {
-			util.Res{Success: false, Message: "音频链接格式错误"}.Write(w)
-			return
-		}
-		if !util.IsValidURL(item.Video) {
-			util.Res{Success: false, Message: "视频链接格式错误"}.Write(w)
-			return
-		}
-		if !util.IsValidFormatCode(item.Format) {
-			util.Res{Success: false, Message: "清晰度代码错误"}.Write(w)
-			return
-		}
-		item.Folder, err = store.GetCurrentFolder(db)
-		item.Status = store.TaskStatusWaiting
-		if err != nil {
-			util.Res{Success: false, Message: fmt.Sprintf("store.GetCurrentFolder: %v.", err)}.Write(w)
-			return
-		}
-		_task := service.NewTask(&item)
-		_task.Title = util.FilterFileName(_task.Title)
-		err = _task.Create(db)
-		if err != nil {
-			util.Res{Success: false, Message: fmt.Sprintf("_task.Create: %v.", err)}.Write(w)
-			return
-		}
-		go _task.Start()
-	}
-	util.Res{Success: true, Message: "创建成功"}.Write(w)
+	}()
+
+	util.Res{Success: true, Message: "任务已提交，正在后台创建"}.Write(w)
 }
 
 // GetActiveTask 获取活动任务
