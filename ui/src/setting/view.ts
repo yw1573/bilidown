@@ -38,6 +38,13 @@ export const FFmpegStatus = (route: SettingRoute) => {
         span({}, 'FFmpeg 状态:'),
         () => route.ffmpegStatus.available.val
             ? span({ class: 'badge bg-success' }, `已安装 (${route.ffmpegStatus.version.val})`)
-            : span({ class: 'badge bg-danger' }, '未安装')
+            : div({ class: 'hstack gap-2' },
+                span({ class: 'badge bg-danger' }, '未安装'),
+                a({
+                    class: 'badge bg-secondary text-decoration-none',
+                    href: 'https://www.ffmpeg.org/',
+                    target: '_blank'
+                }, '前往官网下载')
+            )
     )
 }
