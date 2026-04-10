@@ -89,6 +89,9 @@ func (task *Task) Start() {
 			task.UpdateStatus(db, store.TaskStatusError, fmt.Errorf("os.Rename: %v", err))
 			return
 		}
+		if err := task.addMetadata(outputPath); err != nil {
+			log.Printf("添加元数据失败 (任务ID: %d): %v", task.ID, err)
+		}
 		task.UpdateStatus(db, store.TaskStatusDone)
 		return
 	} else if task.DownloadType == "video" {
@@ -106,6 +109,9 @@ func (task *Task) Start() {
 		if err != nil {
 			task.UpdateStatus(db, store.TaskStatusError, fmt.Errorf("os.Rename: %v", err))
 			return
+		}
+		if err := task.addMetadata(outputPath); err != nil {
+			log.Printf("添加元数据失败 (任务ID: %d): %v", task.ID, err)
 		}
 		task.UpdateStatus(db, store.TaskStatusDone)
 		return
@@ -148,6 +154,9 @@ func (task *Task) Start() {
 			return
 		}
 		GlobalMergeSem.Release()
+		if err := task.addMetadata(outputPath); err != nil {
+			log.Printf("添加元数据失败 (任务ID: %d): %v", task.ID, err)
+		}
 		task.UpdateStatus(db, store.TaskStatusDone)
 	}
 }
@@ -297,6 +306,39 @@ func GetVideoURL(medias []bilibili.Media, format common.MediaFormat) (string, er
 		}
 	}
 	return "", errors.New("未找到对应视频分辨率格式")
+}
+
+// addMetadata 使用 ffmpeg 给输出文件添加元数据（description 和 artist）
+func (task *Task) addMetadata(filePath string) error {
+	ffmpegPath, err := util.GetFFmpegPath()
+	if err != nil {
+		return err
+	}
+	desc := task.Bvid
+	if desc == "" {
+		desc = ""
+	}
+	author := task.Owner
+	tempPath := filePath + ".tmp.mp4"
+	cmd := exec.Command(ffmpegPath,
+		"-i", filePath,
+		"-metadata", "description="+desc,
+		"-metadata", "artist="+author,
+		"-codec", "copy",
+		"-y",
+		tempPath,
+	)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("ffmpeg添加元数据失败: %v, 输出: %s", err, string(output))
+	}
+	if err := os.Remove(filePath); err != nil {
+		return fmt.Errorf("删除原文件失败: %v", err)
+	}
+	if err := os.Rename(tempPath, filePath); err != nil {
+		return fmt.Errorf("重命名临时文件失败: %v", err)
+	}
+	return nil
 }
 
 // GetAudioURL 获取音频URL
