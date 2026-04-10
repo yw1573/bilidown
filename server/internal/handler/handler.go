@@ -21,7 +21,6 @@ func API() *http.ServeMux {
 	router.HandleFunc("/createTask", task.CreateTask)
 	router.HandleFunc("/getActiveTask", task.GetActiveTask)
 	router.HandleFunc("/getTaskList", task.GetTaskList)
-	router.HandleFunc("/showFile", setting.ShowFile)
 	router.HandleFunc("/getFields", setting.GetFields)
 	router.HandleFunc("/saveFields", setting.SaveFields)
 	router.HandleFunc("/logout", login.Logout)

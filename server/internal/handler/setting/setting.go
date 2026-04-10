@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"os/exec"
-	"runtime"
 
 	"bilidown/internal/store"
 	"bilidown/internal/util"
@@ -70,39 +68,6 @@ func SaveFields(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	util.Res{Success: true, Message: "保存成功"}.Write(w)
-}
-
-// ShowFile 显示文件位置
-func ShowFile(w http.ResponseWriter, r *http.Request) {
-	if err := r.ParseForm(); err != nil {
-		util.Res{Success: false, Message: "参数错误"}.Write(w)
-		return
-	}
-	filePath := r.FormValue("filePath")
-
-	var cmd *exec.Cmd
-
-	// 根据操作系统选择命令
-	switch runtime.GOOS {
-	case "windows":
-		// Windows 使用 explorer
-		cmd = exec.Command("explorer", "/select,", filePath)
-	case "darwin":
-		// macOS 使用 open
-		cmd = exec.Command("open", "-R", filePath)
-	case "linux":
-		// Linux 使用 xdg-open
-		cmd = exec.Command("xdg-open", filePath)
-	default:
-		util.Res{Success: false, Message: "不支持的操作系统"}.Write(w)
-		return
-	}
-	err := cmd.Start()
-	if err != nil {
-		util.Res{Success: false, Message: err.Error()}.Write(w)
-		return
-	}
-	util.Res{Success: true, Message: "操作成功"}.Write(w)
 }
 
 // Quit 退出应用
