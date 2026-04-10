@@ -1,6 +1,8 @@
 # Bilidown
 
-[![GitHub Release](https://img.shields.io/github/v/release/iuroc/bilidown)](https://github.com/iuroc/bilidown/releases)
+[![GitHub Release](https://images-tfb361lw6pyvz9bxue3s.oss-cn-chengdu.aliyuncs.com/obsidian/20260410155020344.svg)](https://github.com/yw1573/bilidown/releases)
+
+**作者大大🐂🍺，学习一下这个项目**
 
 哔哩哔哩视频解析下载工具，支持 8K 视频、Hi-Res 音频、杜比视界下载、批量解析，可扫码登录。
 
@@ -16,7 +18,7 @@
 
 1. 从 [Releases](https://github.com/iuroc/bilidown/releases) 下载适合您系统版本的安装包
 2. 安装 [FFmpeg](https://www.ffmpeg.org/) 并添加到系统 PATH
-3. 运行程序，浏览器将自动打开操作界面
+3. 运行程序，浏览器将自动打开操作界面，如果没有的话，请手动打开浏览输入[http://localhost:8098](http://localhost:8098)
 
 ## 软件特色
 
@@ -114,7 +116,3 @@ bilidown/
 ## 软件界面
 
 ![](./docs/2024-11-05_090604.png)
-
-## Star History
-
-[![Star History Chart](https://api.star-history.com/svg?repos=iuroc/bilidown&type=Date)](https://www.star-history.com/#iuroc/bilidown&Date)
