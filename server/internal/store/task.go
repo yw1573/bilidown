@@ -36,6 +36,7 @@ type TaskInitOption struct {
 	Video        string             `json:"video"`
 	Duration     int                `json:"duration"`
 	DownloadType string             `json:"downloadType"`
+	Subfolder    string             `json:"subfolder"`
 }
 
 // TaskInDB 任务数据库中的数据

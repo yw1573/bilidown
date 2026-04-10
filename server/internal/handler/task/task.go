@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strconv"
 
 	"bilidown/internal/service"
@@ -58,12 +59,23 @@ func CreateTask(w http.ResponseWriter, r *http.Request) {
 				log.Printf("清晰度代码错误: bvid=%s", item.Bvid)
 				continue
 			}
-			item.Folder, err = store.GetCurrentFolder(db)
-			item.Status = store.TaskStatusWaiting
+			baseFolder, err := store.GetCurrentFolder(db)
 			if err != nil {
 				log.Printf("store.GetCurrentFolder: %v", err)
 				continue
 			}
+			// 如果有子目录，创建并拼接路径
+			if item.Subfolder != "" {
+				item.Subfolder = util.FilterFileName(item.Subfolder)
+				item.Folder = filepath.Join(baseFolder, item.Subfolder)
+				if err := os.MkdirAll(item.Folder, os.ModePerm); err != nil {
+					log.Printf("创建子目录失败: %v", err)
+					continue
+				}
+			} else {
+				item.Folder = baseFolder
+			}
+			item.Status = store.TaskStatusWaiting
 			_task := service.NewTask(&item)
 			_task.Title = util.FilterFileName(_task.Title)
 			err = _task.Create(db)

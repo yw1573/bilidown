@@ -152,10 +152,15 @@ export class ParseModalComp implements VanComponent {
                 const activeVideoInfo = getActiveFormatVideo(info.info!, info.info!.accept_quality[info.formatIndex.val], this.preferredCodec.val)
                 const pagesLength = workRoute.videoInfoCardData.val.pages.length
 
+                // 判断是否需要创建子目录：多P视频或合集/番剧下载多个时
+                const needSubfolder = pagesLength > 1 || workRoute.allSection.val.length > 1 || workRoute.sectionPages.val.length > 1
+                const subfolder = needSubfolder ? cardTitle.trim() : ''
+
                 return ({
                     bvid: info.page.bvid,
                     cid: info.page.cid,
                     cover: workRoute.videoInfoCardData.val.cover,
+                    subfolder,
                     title: (badgeNotNum
                         ? [
                             info.page.part.trim(),

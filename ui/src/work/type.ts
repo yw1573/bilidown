@@ -245,6 +245,8 @@ export type TaskInitData = {
     video: string
     duration: number
     downloadType: 'audio' | 'video' | 'merge'
+    /** 子目录名，用于多P或合集下载时创建单独目录 */
+    subfolder?: string
 }
 
 /** 任务数据库中的数据 */
