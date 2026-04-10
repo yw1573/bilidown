@@ -1,7 +1,6 @@
 package task
 
 import (
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -120,7 +119,7 @@ func GetTaskList(w http.ResponseWriter, r *http.Request) {
 	util.Res{Success: true, Message: "获取成功", Data: tasks}.Write(w)
 }
 
-// DeleteTask 删除任务
+// DeleteTask 删除任务（仅删除数据库记录，不删除文件）
 func DeleteTask(w http.ResponseWriter, r *http.Request) {
 	taskIDStr := r.FormValue("id")
 	taskID, err := strconv.Atoi(taskIDStr)
@@ -130,22 +129,6 @@ func DeleteTask(w http.ResponseWriter, r *http.Request) {
 	}
 	db := store.MustGetDB()
 	defer db.Close()
-
-	_task, err := store.GetTask(db, taskID)
-	if err == sql.ErrNoRows {
-		util.Res{Success: true, Message: "数据库中没有该条记录，所以本次操作被忽略，可以算作成功。"}.Write(w)
-		return
-	}
-	if err != nil {
-		util.Res{Success: false, Message: fmt.Sprintf("store.GetTask: %v", err)}.Write(w)
-		return
-	}
-	filePath := _task.FilePath()
-	err = os.Remove(filePath)
-	if err != nil && !os.IsNotExist(err) {
-		util.Res{Success: false, Message: fmt.Sprintf("文件删除失败 os.Remove: %v", err)}.Write(w)
-		return
-	}
 
 	err = store.DeleteTask(db, taskID)
 	if err != nil {
@@ -174,7 +157,7 @@ func CancelTask(w http.ResponseWriter, r *http.Request) {
 	util.Res{Success: true, Message: "任务已取消"}.Write(w)
 }
 
-// DeleteTasks 删除任务（批量）
+// DeleteTasks 删除任务（批量，仅删除数据库记录，不删除文件）
 func DeleteTasks(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	if r.Method != http.MethodPost {
@@ -191,20 +174,6 @@ func DeleteTasks(w http.ResponseWriter, r *http.Request) {
 	defer db.Close()
 
 	for _, taskID := range taskIDs {
-		_task, err := store.GetTask(db, taskID)
-		if err == sql.ErrNoRows {
-			continue
-		}
-		if err != nil {
-			log.Printf("store.GetTask: %v", err)
-			continue
-		}
-		filePath := _task.FilePath()
-		err = os.Remove(filePath)
-		if err != nil && !os.IsNotExist(err) {
-			log.Printf("文件删除失败: %v", err)
-			continue
-		}
 		err = store.DeleteTask(db, taskID)
 		if err != nil {
 			log.Printf("store.DeleteTask: %v", err)
