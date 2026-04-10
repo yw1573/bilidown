@@ -64,9 +64,6 @@ func GetFFmpegPath() (string, error) {
 	if err := exec.Command("ffmpeg", "-version").Run(); err == nil {
 		return "ffmpeg", nil
 	}
-	if err := exec.Command("bin/ffmpeg", "-version").Run(); err == nil {
-		return "bin/ffmpeg", nil
-	}
 	return "", errors.New("ffmpeg not found")
 }
 

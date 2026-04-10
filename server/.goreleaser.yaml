@@ -66,9 +66,6 @@ archives:
       format_overrides:
           - goos: windows
             format: zip
-      files:
-          - >-
-              {{- if eq .Os "windows" }}bin/ffmpeg.exe{{- end }}
 
 changelog:
     sort: asc
