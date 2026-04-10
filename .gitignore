@@ -1,7 +1,6 @@
 node_modules/
 dist/
 tmp/
-static/
 *.db
 *.exe
 download/
@@ -11,3 +10,7 @@ build/
 server/bilidown.exe~
 .omc
 docs/superpowers
+
+# 生成的静态文件（嵌入二进制）
+server/internal/static/ui/*
+!server/internal/static/ui/.gitkeep

@@ -3,12 +3,14 @@ package app
 import (
 	"errors"
 	"fmt"
+	"io/fs"
 	"log"
 	"net/http"
 	"os/exec"
 	"runtime"
 
 	"bilidown/internal/handler"
+	"bilidown/internal/static"
 	"bilidown/internal/store"
 	"bilidown/internal/util"
 )
@@ -65,8 +67,12 @@ func (a *App) checkFFmpeg() {
 
 // startServer 启动 HTTP 服务器
 func (a *App) startServer() {
-	// 前端打包文件
-	http.Handle("/", http.FileServer(http.Dir("static")))
+	// 前端静态文件（嵌入二进制）
+	staticFS, err := fs.Sub(static.Files, "ui")
+	if err != nil {
+		log.Fatal("static.Files:", err)
+	}
+	http.Handle("/", http.FileServer(http.FS(staticFS)))
 	// 后端接口服务
 	http.Handle("/api/", http.StripPrefix("/api", handler.API()))
 	// 启动 HTTP 服务器
