@@ -7,17 +7,9 @@ import (
 
 // InitTables 初始化数据表
 func InitTables(db *sql.DB) error {
-	if _, err := db.Exec(`CREATE TABLE IF NOT EXISTS "field" (
+	if _, err := db.Exec(`CREATE TABLE IF NOT EXISTS "settings" (
 		"name" TEXT PRIMARY KEY NOT NULL,
 		"value" TEXT
-	)`); err != nil {
-		return err
-	}
-
-	if _, err := db.Exec(`CREATE TABLE IF NOT EXISTS "log" (
-		"id" integer NOT NULL PRIMARY KEY AUTOINCREMENT,
-		"content" TEXT NOT NULL,
-		"create_at" text NOT NULL DEFAULT CURRENT_TIMESTAMP
 	)`); err != nil {
 		return err
 	}

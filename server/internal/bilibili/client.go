@@ -161,7 +161,7 @@ func GetCookieValue(cookies []*http.Cookie, name string) (string, error) {
 // SaveSessdata 保存 SESSDATA
 func SaveSessdata(db *sql.DB, sessdata string) error {
 	store.SqliteLock.Lock()
-	_, err := db.Exec(`INSERT OR REPLACE INTO "field" ("name", "value") VALUES ("sessdata", ?)`, sessdata)
+	_, err := db.Exec(`INSERT OR REPLACE INTO "settings" ("name", "value") VALUES ("sessdata", ?)`, sessdata)
 	store.SqliteLock.Unlock()
 	return err
 }
@@ -169,7 +169,7 @@ func SaveSessdata(db *sql.DB, sessdata string) error {
 // GetSessdata 获取 SESSDATA
 func GetSessdata(db *sql.DB) (string, error) {
 	store.SqliteLock.Lock()
-	row := db.QueryRow(`SELECT "value" FROM "field" WHERE "name" = "sessdata"`)
+	row := db.QueryRow(`SELECT "value" FROM "settings" WHERE "name" = "sessdata"`)
 	store.SqliteLock.Unlock()
 	var sessdata string
 	err := row.Scan(&sessdata)

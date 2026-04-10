@@ -54,7 +54,7 @@ func GetFields(db *sql.DB, names ...string) (map[string]string, error) {
 	for i := 0; i < len(names); i++ {
 		placeholders[i] = "?"
 	}
-	query := fmt.Sprintf(`SELECT "name", "value" FROM "field" WHERE "name" IN (%s)`, strings.Join(placeholders, ","))
+	query := fmt.Sprintf(`SELECT "name", "value" FROM "settings" WHERE "name" IN (%s)`, strings.Join(placeholders, ","))
 
 	values := make([]interface{}, len(names))
 	for i := 0; i < len(names); i++ {
@@ -96,7 +96,7 @@ func SaveFields(db *sql.DB, data [][2]string) error {
 		}
 	}()
 
-	stmt, err := tx.Prepare(`INSERT OR REPLACE INTO "field" ("name", "value") VALUES (?, ?)`)
+	stmt, err := tx.Prepare(`INSERT OR REPLACE INTO "settings" ("name", "value") VALUES (?, ?)`)
 	if err != nil {
 		return err
 	}
@@ -117,7 +117,7 @@ func SaveFields(db *sql.DB, data [][2]string) error {
 func GetCurrentFolder(db *sql.DB) (string, error) {
 	var folder string
 	SqliteLock.Lock()
-	err := db.QueryRow(`SELECT "value" FROM "field" WHERE "name" = 'download_folder'`).Scan(&folder)
+	err := db.QueryRow(`SELECT "value" FROM "settings" WHERE "name" = 'download_folder'`).Scan(&folder)
 	SqliteLock.Unlock()
 	if err != nil && err == sql.ErrNoRows {
 		folder, err = util.GetDefaultDownloadFolder()
@@ -154,7 +154,7 @@ func SaveDownloadFolder(db *sql.DB, downloadFolder string) error {
 		return err
 	}
 	SqliteLock.Lock()
-	_, err = db.Exec(`INSERT OR REPLACE INTO "field" ("name", "value") VALUES ('download_folder', ?)`, downloadFolder)
+	_, err = db.Exec(`INSERT OR REPLACE INTO "settings" ("name", "value") VALUES ('download_folder', ?)`, downloadFolder)
 	SqliteLock.Unlock()
 	return err
 }

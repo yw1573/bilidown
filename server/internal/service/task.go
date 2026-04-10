@@ -168,9 +168,7 @@ func (task *Task) UpdateStatus(db *sql.DB, status store.TaskStatus, errs ...erro
 	}
 	for _, err := range errs {
 		if err != nil {
-			if logErr := store.CreateLog(db, fmt.Sprintf("Task-%d-Error: %v", task.ID, err)); logErr != nil {
-				log.Fatalln("CreateLog:", logErr)
-			}
+			log.Printf("Task-%d-Error: %v", task.ID, err)
 		}
 	}
 	task.Status = status
