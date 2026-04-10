@@ -10,47 +10,9 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
-  # go-lint:
-  #   name: Go Lint
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - name: Set up Go
-  #       uses: actions/setup-go@v5
-  #       with:
-  #         go-version: '1.22'
-  #     - name: Check formatting
-  #       run: |
-  #         cd server
-  #         gofmt -l .
-  #     - name: Run vet
-  #       run: |
-  #         cd server
-  #         sudo apt-get update
-  #         sudo apt-get install -y pkg-config gcc libayatana-appindicator3-dev
-  #         go vet ./...
-
-  # go-test:
-  #   name: Go Test
-  #   needs: go-lint
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - name: Set up Go
-  #       uses: actions/setup-go@v5
-  #       with:
-  #         go-version: '1.22'
-  #     - name: Install Linux build dependencies
-  #       run: |
-  #         sudo apt-get update
-  #         sudo apt-get install -y pkg-config gcc libayatana-appindicator3-dev
-  #     - name: Run Go tests
-  #       working-directory: server
-  #       run: go test ./...
-
-  node-build:
-    name: Node Build
-    # needs: go-build
+  # 前端构建
+  frontend-build:
+    name: Frontend Build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -76,26 +38,54 @@ jobs:
         working-directory: ui
         run: pnpm install
 
-      - name: Build client
+      - name: Build frontend
         working-directory: ui
         run: pnpm run build
 
-  go-build:
-    name: Go Build
-    # needs: go-test
+      - name: Upload frontend artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-static
+          path: server/internal/static/ui/
+          retention-days: 1
+
+  # Go Releaser - 跨平台构建和发布
+  goreleaser:
+    name: GoReleaser Build & Release
+    needs: frontend-build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download frontend artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-static
+          path: server/internal/static/ui/
+
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
           go-version: '1.22'
-      - name: Install Linux build dependencies
+
+      - name: Install cross-compilation dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y pkg-config gcc libayatana-appindicator3-dev
-      - name: Build Go binary
-        working-directory: server
-        run: go build ./...
+          sudo apt-get install -y \
+            pkg-config \
+            gcc \
+            mingw-w64 \
+            gcc-aarch64-linux-gnu \
+            libayatana-appindicator3-dev
 
-
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          distribution: goreleaser
+          version: '~> v2'
+          args: release --clean
+          workdir: server
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
