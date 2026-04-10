@@ -67,3 +67,14 @@ export const deleteTask = async (id: number) => {
     const res = await fetch(`/api/deleteTask?id=${id}`).then(res => res.json()) as ResJSON
     if (!res.success) throw new Error(res.message)
 }
+
+export const cancelTask = async (ids: number[]) => {
+    const res = await fetch('/api/cancelTask', {
+        method: 'POST',
+        body: JSON.stringify(ids),
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    }).then(res => res.json()) as ResJSON
+    if (!res.success) throw new Error(res.message)
+}

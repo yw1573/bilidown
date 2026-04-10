@@ -28,6 +28,7 @@ type Task struct {
 	AudioProgress float64 `json:"audioProgress"`
 	VideoProgress float64 `json:"videoProgress"`
 	MergeProgress float64 `json:"mergeProgress"`
+	Cancelled     bool    `json:"cancelled"`
 }
 
 // GlobalTaskList 全局任务列表
@@ -41,6 +42,37 @@ var GlobalDownloadSem = util.NewSemaphore(3)
 
 // GlobalMergeSem 合并并发控制
 var GlobalMergeSem = util.NewSemaphore(3)
+
+// CancelTask 取消任务
+func CancelTask(taskID int64) {
+	GlobalTaskMux.Lock()
+	defer GlobalTaskMux.Unlock()
+	for _, task := range GlobalTaskList {
+		if task.ID == taskID {
+			task.Cancelled = true
+			log.Printf("任务 %d 已标记为取消", taskID)
+			return
+		}
+	}
+}
+
+// CleanTempFiles 清理任务临时文件
+func (task *Task) CleanTempFiles() {
+	files := []string{
+		filepath.Join(task.Folder, strconv.FormatInt(task.ID, 10)+".audio"),
+		filepath.Join(task.Folder, strconv.FormatInt(task.ID, 10)+".video"),
+		filepath.Join(task.Folder, strconv.FormatInt(task.ID, 10)+".tmp.mp4"),
+	}
+	for _, f := range files {
+		if _, err := os.Stat(f); err == nil {
+			if err := os.Remove(f); err != nil {
+				log.Printf("清理临时文件失败: %s, %v", f, err)
+			} else {
+				log.Printf("已清理临时文件: %s", f)
+			}
+		}
+	}
+}
 
 // Create 创建任务记录
 func (task *Task) Create(db *sql.DB) error {
@@ -63,6 +95,14 @@ func (task *Task) Start() {
 	GlobalTaskMux.Unlock()
 	db := store.MustGetDB()
 	defer db.Close()
+
+	// 检查是否已取消
+	if task.Cancelled {
+		task.CleanTempFiles()
+		task.UpdateStatus(db, store.TaskStatusError, fmt.Errorf("任务已取消"))
+		return
+	}
+
 	sessdata, err := bilibili.GetSessdata(db)
 	if err != nil {
 		task.UpdateStatus(db, store.TaskStatusError, fmt.Errorf("bilibili.GetSessdata: %v", err))
@@ -71,14 +111,26 @@ func (task *Task) Start() {
 	client := &bilibili.BiliClient{SESSDATA: sessdata}
 
 	GlobalDownloadSem.Acquire()
+	// 再次检查取消状态
+	if task.Cancelled {
+		GlobalDownloadSem.Release()
+		task.CleanTempFiles()
+		task.UpdateStatus(db, store.TaskStatusError, fmt.Errorf("任务已取消"))
+		return
+	}
 	task.UpdateStatus(db, store.TaskStatusRunning)
 
 	if task.DownloadType == "audio" {
 		// 仅音频模式：只下载音频，重命名音频文件为输出文件
 		err = DownloadMedia(client, task.Audio, task, "audio")
-		if err != nil {
+		if err != nil || task.Cancelled {
 			GlobalDownloadSem.Release()
-			task.UpdateStatus(db, store.TaskStatusError, fmt.Errorf("DownloadMedia: %v", err))
+			task.CleanTempFiles()
+			if task.Cancelled {
+				task.UpdateStatus(db, store.TaskStatusError, fmt.Errorf("任务已取消"))
+			} else {
+				task.UpdateStatus(db, store.TaskStatusError, fmt.Errorf("DownloadMedia: %v", err))
+			}
 			return
 		}
 		GlobalDownloadSem.Release()
@@ -97,9 +149,14 @@ func (task *Task) Start() {
 	} else if task.DownloadType == "video" {
 		// 仅视频模式：只下载视频，重命名视频文件为输出文件
 		err = DownloadMedia(client, task.Video, task, "video")
-		if err != nil {
+		if err != nil || task.Cancelled {
 			GlobalDownloadSem.Release()
-			task.UpdateStatus(db, store.TaskStatusError, fmt.Errorf("DownloadMedia: %v", err))
+			task.CleanTempFiles()
+			if task.Cancelled {
+				task.UpdateStatus(db, store.TaskStatusError, fmt.Errorf("任务已取消"))
+			} else {
+				task.UpdateStatus(db, store.TaskStatusError, fmt.Errorf("DownloadMedia: %v", err))
+			}
 			return
 		}
 		GlobalDownloadSem.Release()
@@ -118,15 +175,25 @@ func (task *Task) Start() {
 	} else {
 		// 合并模式：下载音频和视频，然后合并
 		err = DownloadMedia(client, task.Audio, task, "audio")
-		if err != nil {
+		if err != nil || task.Cancelled {
 			GlobalDownloadSem.Release()
-			task.UpdateStatus(db, store.TaskStatusError, fmt.Errorf("DownloadMedia: %v", err))
+			task.CleanTempFiles()
+			if task.Cancelled {
+				task.UpdateStatus(db, store.TaskStatusError, fmt.Errorf("任务已取消"))
+			} else {
+				task.UpdateStatus(db, store.TaskStatusError, fmt.Errorf("DownloadMedia: %v", err))
+			}
 			return
 		}
 		err = DownloadMedia(client, task.Video, task, "video")
-		if err != nil {
+		if err != nil || task.Cancelled {
 			GlobalDownloadSem.Release()
-			task.UpdateStatus(db, store.TaskStatusError, fmt.Errorf("DownloadMedia: %v", err))
+			task.CleanTempFiles()
+			if task.Cancelled {
+				task.UpdateStatus(db, store.TaskStatusError, fmt.Errorf("任务已取消"))
+			} else {
+				task.UpdateStatus(db, store.TaskStatusError, fmt.Errorf("DownloadMedia: %v", err))
+			}
 			return
 		}
 		GlobalDownloadSem.Release()
@@ -135,9 +202,17 @@ func (task *Task) Start() {
 		videoPath := filepath.Join(task.Folder, strconv.FormatInt(task.ID, 10)+".video")
 		audioPath := filepath.Join(task.Folder, strconv.FormatInt(task.ID, 10)+".audio")
 		GlobalMergeSem.Acquire()
+		// 合并前检查取消状态
+		if task.Cancelled {
+			GlobalMergeSem.Release()
+			task.CleanTempFiles()
+			task.UpdateStatus(db, store.TaskStatusError, fmt.Errorf("任务已取消"))
+			return
+		}
 		err = task.MergeMedia(outputPath, videoPath, audioPath)
 		if err != nil {
 			GlobalMergeSem.Release()
+			task.CleanTempFiles()
 			task.UpdateStatus(db, store.TaskStatusError, fmt.Errorf("task.MergeMedia: %v", err))
 			return
 		}
@@ -274,6 +349,10 @@ func DownloadMedia(client *bilibili.BiliClient, _url string, task *Task, mediaTy
 	reader := io.TeeReader(resp.Body, file)
 	buf := make([]byte, 1024)
 	for {
+		// 检查取消状态
+		if task.Cancelled {
+			return fmt.Errorf("任务已取消")
+		}
 		n, err := reader.Read(buf)
 		if err != nil && err != io.EOF {
 			return err

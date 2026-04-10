@@ -142,3 +142,22 @@ func DeleteTask(w http.ResponseWriter, r *http.Request) {
 	}
 	util.Res{Success: true, Message: "删除成功"}.Write(w)
 }
+
+// CancelTask 取消任务（批量）
+func CancelTask(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
+	if r.Method != http.MethodPost {
+		util.Res{Success: false, Message: "不支持的请求方法"}.Write(w)
+		return
+	}
+	var taskIDs []int64
+	err := json.NewDecoder(r.Body).Decode(&taskIDs)
+	if err != nil {
+		util.Res{Success: false, Message: "参数错误"}.Write(w)
+		return
+	}
+	for _, id := range taskIDs {
+		service.CancelTask(id)
+	}
+	util.Res{Success: true, Message: "任务已取消"}.Write(w)
+}

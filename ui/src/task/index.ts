@@ -1,12 +1,12 @@
 import van, { State } from 'vanjs-core'
 import { Route, goto, now } from 'vanjs-router'
 import { checkLogin, GLOBAL_HAS_LOGIN, GLOBAL_HIDE_PAGE, ResJSON, VanComponent } from '../mixin'
-import { deleteTask, getActiveTask, getTaskList } from './data'
+import { deleteTask, getActiveTask, getTaskList, cancelTask } from './data'
 import { TaskInDB, TaskStatus } from '../work/type'
 import { LoadingBox } from '../view'
 import { PlayerModalComp } from './playerModal'
 
-const { div, span } = van.tags
+const { div, span, button } = van.tags
 
 const { svg, path } = van.tags('http://www.w3.org/2000/svg')
 
@@ -30,6 +30,10 @@ export class TaskRoute implements VanComponent {
         deleting: State<boolean>
     })[]> = van.state([])
 
+    hasRunningTasks = van.derive(() =>
+        this.taskList.val.some(task => task.statusState.val === 'running' || task.statusState.val === 'waiting')
+    )
+
     constructor() {
 
         this.element = this.Root()
@@ -42,14 +46,27 @@ export class TaskRoute implements VanComponent {
             Loader() {
                 return div(
                     () => _that.loading.val ? LoadingBox() : '',
-                    () => div({ class: 'list-group', hidden: _that.loading.val },
-                        _that.taskList.val.map(task => {
-                            const ext = task.downloadType === 'audio' ? '.m4a' : '.mp4'
-                            const filename = `${task.title} ${btoa(task.id.toString()).replace(/=/g, '')}${ext}`
-                            return div({
-                                class: () => `list-group-item p-0 hstack user-select-none ${task.statusState.val != 'done' && task.statusState.val != 'error' || task.deleting.val ? 'disabled' : ''}`,
-                                hidden: task.deleting,
-                            },
+                    () => _that.loading.val ? '' : div({ class: 'vstack gap-2' },
+                        div({ class: 'hstack justify-content-end', hidden: () => !_that.hasRunningTasks.val },
+                            button({
+                                class: 'btn btn-outline-danger btn-sm',
+                                onclick() {
+                                    if (!confirm('确定要取消所有正在进行的任务吗？')) return
+                                    const runningIds = _that.taskList.val
+                                        .filter(task => task.statusState.val === 'running' || task.statusState.val === 'waiting')
+                                        .map(task => task.id)
+                                    cancelTask(runningIds).catch(error => alert(error.message))
+                                }
+                            }, '取消所有任务')
+                        ),
+                        div({ class: 'list-group' },
+                            _that.taskList.val.map(task => {
+                                const ext = task.downloadType === 'audio' ? '.m4a' : '.mp4'
+                                const filename = `${task.title} ${btoa(task.id.toString()).replace(/=/g, '')}${ext}`
+                                return div({
+                                    class: () => `list-group-item p-0 hstack user-select-none ${task.statusState.val != 'done' && task.statusState.val != 'error' || task.deleting.val ? 'disabled' : ''}`,
+                                    hidden: task.deleting,
+                                },
                                 div({
                                     class: 'vstack gap-2 py-2 px-3',
                                     style: `cursor: pointer;`,
@@ -111,14 +128,20 @@ export class TaskRoute implements VanComponent {
                                         }),
                                     )
                                 ),
-                                div({
-                                    class: 'me-4',
-                                    hidden: task.statusState.val != 'done'
-                                        && task.statusState.val != 'error'
-                                        || task.deleting.val
-                                },
+                                div({ class: 'me-2 hstack gap-1' },
                                     div({
-                                        class: 'hover-btn', title: '删除视频',
+                                        class: 'hover-btn',
+                                        title: '取消任务',
+                                        hidden: () => task.statusState.val !== 'running' && task.statusState.val !== 'waiting',
+                                        onclick() {
+                                            if (!confirm('确定要取消这个任务吗？')) return
+                                            cancelTask([task.id]).catch(error => alert(error.message))
+                                        }
+                                    }, _that.CancelSVG()),
+                                    div({
+                                        class: 'hover-btn',
+                                        title: '删除视频',
+                                        hidden: () => task.statusState.val != 'done' && task.statusState.val != 'error',
                                         onclick() {
                                             task.deleting.val = true
                                             deleteTask(task.id).then(() => {
@@ -127,12 +150,10 @@ export class TaskRoute implements VanComponent {
                                                 alert(error.message)
                                             })
                                         }
-                                    },
-                                        _that.DeleteSVG()
-                                    )
-                                ),
-                            )
-                        })
+                                    }, _that.DeleteSVG())
+                                ))
+                            })
+                        )
                     )
                 )
             },
@@ -171,7 +192,7 @@ export class TaskRoute implements VanComponent {
                                 }
                             })
                         })
-                        if (activeTaskList.filter(task => task.status == 'running').length == 0) {
+                        if (activeTaskList.filter(task => task.status == 'running' || task.status == 'waiting').length == 0) {
                             clearInterval(timer)
                             clearInterval(helper)
                         }
@@ -197,6 +218,13 @@ export class TaskRoute implements VanComponent {
     DeleteSVG() {
         return svg({ style: `width: 1em; height: 1em`, fill: "currentColor", class: "bi bi-trash3", viewBox: "0 0 16 16" },
             path({ "d": "M6.5 1h3a.5.5 0 0 1 .5.5v1H6v-1a.5.5 0 0 1 .5-.5M11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3A1.5 1.5 0 0 0 5 1.5v1H1.5a.5.5 0 0 0 0 1h.538l.853 10.66A2 2 0 0 0 4.885 16h6.23a2 2 0 0 0 1.994-1.84l.853-10.66h.538a.5.5 0 0 0 0-1zm1.958 1-.846 10.58a1 1 0 0 1-.997.92h-6.23a1 1 0 0 1-.997-.92L3.042 3.5zm-7.487 1a.5.5 0 0 1 .528.47l.5 8.5a.5.5 0 0 1-.998.06L5 5.03a.5.5 0 0 1 .47-.53Zm5.058 0a.5.5 0 0 1 .47.53l-.5 8.5a.5.5 0 1 1-.998-.06l.5-8.5a.5.5 0 0 1 .528-.47M8 4.5a.5.5 0 0 1 .5.5v8.5a.5.5 0 0 1-1 0V5a.5.5 0 0 1 .5-.5" }),
+        )
+    }
+
+    CancelSVG() {
+        return svg({ style: `width: 1em; height: 1em`, fill: "currentColor", class: "bi bi-x-circle", viewBox: "0 0 16 16" },
+            path({ "d": "M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16" }),
+            path({ "d": "M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708" }),
         )
     }
 }

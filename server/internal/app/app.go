@@ -19,7 +19,7 @@ import (
 const (
 	HTTP_PORT = 8098      // HTTP 服务器端口
 	HTTP_HOST = ""        // HTTP 服务器主机
-	VERSION   = "v2.1.0" // 软件版本号
+	VERSION   = "v1.0.3" // 软件版本号
 )
 
 var urlLocal = fmt.Sprintf("http://127.0.0.1:%d", HTTP_PORT)
