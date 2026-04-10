@@ -39,6 +39,8 @@ export class TaskRoute implements VanComponent {
 
     hasSelectedTasks = van.derive(() => this.selectedIds.val.size > 0)
 
+    hasAllSelected = van.derive(() => this.selectedIds.val.size === this.taskList.val.length && this.taskList.val.length > 0)
+
     constructor() {
         this.element = this.Root()
     }
@@ -52,6 +54,17 @@ export class TaskRoute implements VanComponent {
                     () => _that.loading.val ? LoadingBox() : '',
                     () => _that.loading.val ? '' : div({ class: 'vstack gap-2' },
                         div({ class: 'hstack justify-content-end gap-2' },
+                            button({
+                                class: 'btn btn-outline-secondary btn-sm',
+                                hidden: () => _that.taskList.val.length === 0,
+                                onclick() {
+                                    if (_that.hasAllSelected.val) {
+                                        _that.selectedIds.val = new Set()
+                                    } else {
+                                        _that.selectedIds.val = new Set(_that.taskList.val.map(t => t.id))
+                                    }
+                                }
+                            }, () => _that.hasAllSelected.val ? '取消全选' : '全选'),
                             button({
                                 class: 'btn btn-outline-primary btn-sm',
                                 hidden: () => !_that.hasSelectedTasks.val,
