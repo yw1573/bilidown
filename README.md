@@ -2,6 +2,8 @@
 
 [![GitHub Release](https://img.shields.io/github/v/release/iuroc/bilidown)](https://github.com/iuroc/bilidown/releases)
 
+**首先作者大大🐮🍺，学习一下这个项目**
+
 哔哩哔哩视频解析下载工具，支持 8K 视频、Hi-Res 音频、杜比视界下载、批量解析，可扫码登录，常驻托盘。
 
 ## 支持解析的链接类型
