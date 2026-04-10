@@ -36,15 +36,13 @@ export default () => {
             ),
         ),
         div({ class: 'ms-auto hstack gap-2' },
-            div({ class: 'hstack gap-2', hidden: () => !GLOBAL_HAS_LOGIN.val },
-                () => GLOBAL_FFMPEG_STATUS.available.val
-                    ? span({ class: 'badge bg-success' }, `FFmpeg (${GLOBAL_FFMPEG_STATUS.version.val})`)
-                    : a({
-                        class: 'badge bg-danger text-decoration-none',
-                        href: 'https://www.ffmpeg.org/',
-                        target: '_blank'
-                    }, 'FFmpeg 未安装')
-            ),
+            () => GLOBAL_FFMPEG_STATUS.available.val
+                ? span({ class: 'badge bg-success' }, `FFmpeg (${GLOBAL_FFMPEG_STATUS.version.val})`)
+                : a({
+                    class: 'badge bg-danger text-decoration-none',
+                    href: 'https://www.ffmpeg.org/',
+                    target: '_blank'
+                }, 'FFmpeg 未安装'),
             button({
                 class: 'btn btn-outline-secondary btn-sm',
                 onclick() {
