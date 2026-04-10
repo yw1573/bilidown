@@ -36,7 +36,7 @@
 
 ```shell
 git clone https://github.com/iuroc/bilidown
-cd bilidown/client
+cd bilidown/ui
 pnpm install
 pnpm build
 cd ../server
@@ -101,7 +101,7 @@ sudo apt install pkg-config gcc libayatana-appindicator3-dev
 ## 开发环境
 
 ```bash
-# client
+# ui
 pnpm install
 pnpm dev
 # server

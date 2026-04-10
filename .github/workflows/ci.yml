@@ -70,14 +70,14 @@ jobs:
         with:
           node-version: '24'
           cache: 'pnpm'
-          cache-dependency-path: client/pnpm-lock.yaml
+          cache-dependency-path: ui/pnpm-lock.yaml
 
       - name: Install dependencies
-        working-directory: client
+        working-directory: ui
         run: pnpm install
 
       - name: Build client
-        working-directory: client
+        working-directory: ui
         run: pnpm run build
 
   go-build:
