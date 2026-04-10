@@ -22,8 +22,10 @@ export type VideoFormat = 6 | 16 | 32 | 64 | 74 | 80 | 112 | 116 | 120 | 125 | 1
 
 /** 视频解析结果，数据用于 DOM 渲染，同时兼容 BV、EP、SS */
 export type VideoParseResult = {
-    /** 合集标题 */
+    /** 视频标题/番剧标题 */
     title: string
+    /** 合集标题（视频合集/多P视频时使用） */
+    seasonTitle: string
     /** 合集描述 */
     description: string
     /** 合集发布时间 */

@@ -50,6 +50,7 @@ export const start = async (
                 status: '',
                 cover: info.pic,
                 title: info.title,
+                seasonTitle: info.ugc_season.title || '',
                 description: info.desc,
                 publishData: new Date(info.pubdate * 1000).toLocaleString(),
                 duration: info.duration,
@@ -86,7 +87,8 @@ export const start = async (
                 publishData: new Date().toLocaleDateString(),
                 staff: info.actors.split('\n'),
                 dimension: { height: 0, rotate: 0, width: 0 },
-                title: info.title
+                title: info.title,
+                seasonTitle: info.title
             }
             workRoute.videoInfoCardMode.val = 'season'
         })
@@ -116,7 +118,8 @@ export const start = async (
                 status: '',
                 styles: [],
                 targetURL: `https://www.bilibili.com/video/${favList[0].bvid}`,
-                title: favList[0].title
+                title: favList[0].title,
+                seasonTitle: ''
             }
             workRoute.videoInfoCardMode.val = 'video'
         })

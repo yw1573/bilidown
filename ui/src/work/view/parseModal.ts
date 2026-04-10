@@ -146,6 +146,7 @@ export class ParseModalComp implements VanComponent {
                 const badgeNotNum = !info.page.badge.match(/^\d+$/)
                 const isVideoMode = workRoute.videoInfoCardMode.val == 'video'
                 const cardTitle = workRoute.videoInfoCardData.val.title
+                const seasonTitle = workRoute.videoInfoCardData.val.seasonTitle
                 const owner = workRoute.videoInfoCardData.val.staff.length > 0
                     ? workRoute.videoInfoCardData.val.staff[0].split("[")[0].trim()
                     : workRoute.videoInfoCardData.val.owner.name.trim()
@@ -154,7 +155,8 @@ export class ParseModalComp implements VanComponent {
 
                 // 判断是否需要创建子目录：多P视频或合集/番剧下载多个时
                 const needSubfolder = pagesLength > 1 || workRoute.allSection.val.length > 1 || workRoute.sectionPages.val.length > 1
-                const subfolder = needSubfolder ? cardTitle.trim() : ''
+                // 子目录名优先使用合集名/番剧名，否则使用视频标题
+                const subfolder = needSubfolder ? (seasonTitle || cardTitle).trim() : ''
 
                 return ({
                     bvid: info.page.bvid,

@@ -20,7 +20,7 @@ export class WorkRoute {
     urlInvalidClass = van.derive(() => this.urlInvalid.val ? 'is-invalid' : '')
     urlValue = van.state('')
     videoInfoCardData = van.state<VideoParseResult>({
-        title: '', description: '', cover: '', publishData: '', duration: 0,
+        title: '', seasonTitle: '', description: '', cover: '', publishData: '', duration: 0,
         pages: [], owner: { face: '', mid: 0, name: '' },
         dimension: { width: 0, height: 0, rotate: 0 },
         staff: [], status: '', areas: [], styles: [], targetURL: '',
