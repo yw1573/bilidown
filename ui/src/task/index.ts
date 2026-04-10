@@ -6,7 +6,7 @@ import { TaskInDB, TaskStatus } from '../work/type'
 import { LoadingBox } from '../view'
 import { PlayerModalComp } from './playerModal'
 
-const { div, span, button } = van.tags
+const { div, span, button, input } = van.tags
 
 const { svg, path } = van.tags('http://www.w3.org/2000/svg')
 
@@ -16,6 +16,9 @@ export class TaskRoute implements VanComponent {
     playerModalComp = new PlayerModalComp()
 
     loading = van.state(false)
+
+    /** 选中的任务ID */
+    selectedIds: State<Set<number>> = van.state(new Set())
 
     taskList: State<(TaskInDB & {
         /** 音频下载进度百分比 */
@@ -34,8 +37,9 @@ export class TaskRoute implements VanComponent {
         this.taskList.val.some(task => task.statusState.val === 'running' || task.statusState.val === 'waiting')
     )
 
-    constructor() {
+    hasSelectedTasks = van.derive(() => this.selectedIds.val.size > 0)
 
+    constructor() {
         this.element = this.Root()
     }
 
@@ -47,15 +51,29 @@ export class TaskRoute implements VanComponent {
                 return div(
                     () => _that.loading.val ? LoadingBox() : '',
                     () => _that.loading.val ? '' : div({ class: 'vstack gap-2' },
-                        div({ class: 'hstack justify-content-end', hidden: () => !_that.hasRunningTasks.val },
+                        div({ class: 'hstack justify-content-end gap-2' },
+                            button({
+                                class: 'btn btn-outline-primary btn-sm',
+                                hidden: () => !_that.hasSelectedTasks.val,
+                                onclick() {
+                                    const ids = Array.from(_that.selectedIds.val)
+                                    if (!confirm(`确定要取消选中的 ${ids.length} 个任务吗？`)) return
+                                    cancelTask(ids).then(() => {
+                                        _that.selectedIds.val = new Set()
+                                    }).catch(error => alert(error.message))
+                                }
+                            }, () => `取消选中 (${_that.selectedIds.val.size})`),
                             button({
                                 class: 'btn btn-outline-danger btn-sm',
+                                hidden: () => !_that.hasRunningTasks.val,
                                 onclick() {
                                     if (!confirm('确定要取消所有正在进行的任务吗？')) return
                                     const runningIds = _that.taskList.val
                                         .filter(task => task.statusState.val === 'running' || task.statusState.val === 'waiting')
                                         .map(task => task.id)
-                                    cancelTask(runningIds).catch(error => alert(error.message))
+                                    cancelTask(runningIds).then(() => {
+                                        _that.selectedIds.val = new Set()
+                                    }).catch(error => alert(error.message))
                                 }
                             }, '取消所有任务')
                         ),
@@ -63,12 +81,29 @@ export class TaskRoute implements VanComponent {
                             _that.taskList.val.map(task => {
                                 const ext = task.downloadType === 'audio' ? '.m4a' : '.mp4'
                                 const filename = `${task.title} ${btoa(task.id.toString()).replace(/=/g, '')}${ext}`
+                                const isSelected = van.derive(() => _that.selectedIds.val.has(task.id))
                                 return div({
                                     class: () => `list-group-item p-0 hstack user-select-none ${task.statusState.val != 'done' && task.statusState.val != 'error' || task.deleting.val ? 'disabled' : ''}`,
                                     hidden: task.deleting,
                                 },
+                                // 复选框
+                                input({
+                                    type: 'checkbox',
+                                    class: 'form-check-input ms-2',
+                                    checked: isSelected,
+                                    style: 'cursor: pointer;',
+                                    onclick() {
+                                        const newSet = new Set(_that.selectedIds.val)
+                                        if (newSet.has(task.id)) {
+                                            newSet.delete(task.id)
+                                        } else {
+                                            newSet.add(task.id)
+                                        }
+                                        _that.selectedIds.val = newSet
+                                    }
+                                }),
                                 div({
-                                    class: 'vstack gap-2 py-2 px-3',
+                                    class: 'vstack gap-2 py-2 px-3 flex-fill',
                                     style: `cursor: pointer;`,
                                     onclick() {
                                         const src = `/api/downloadVideo?path=${encodeURIComponent(
