@@ -33,26 +33,15 @@ export class SettingRoute implements VanComponent {
                     () => _that.loading.val ? LoadingBox() : '',
                     () => _that.loading.val ? '' : div({ class: 'vstack gap-4' },
                         SaveFolderSetting(_that),
-                        div({ class: 'hstack gap-3' },
-                            button({
-                                class: 'btn btn-outline-secondary', onclick() {
-                                    if (!confirm('确定要关闭软件吗?')) return
-                                    fetch('/api/quit').then(res => res.json()).then(res => {
-                                        if (!res.success) alert(res.message)
-                                        else document.write(`<h2 style="text-align: center; padding: 30px 20px;">软件已关闭</h2>`)
-                                    })
-                                }
-                            }, '关闭软件'),
-                            button({
-                                class: 'btn btn-outline-danger', onclick() {
-                                    if (!confirm('确定要退出登录吗?')) return
-                                    fetch('/api/logout').then(res => res.json()).then(res => {
-                                        if (!res.success) alert(res.message)
-                                        else location.reload()
-                                    })
-                                }
-                            }, '退出登录'),
-                        )
+                        button({
+                            class: 'btn btn-outline-danger', onclick() {
+                                if (!confirm('确定要退出登录吗?')) return
+                                fetch('/api/logout').then(res => res.json()).then(res => {
+                                    if (!res.success) alert(res.message)
+                                    else location.reload()
+                                })
+                            }
+                        }, '退出登录'),
                     )
                 )
             },
