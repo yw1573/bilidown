@@ -173,3 +173,43 @@ func CancelTask(w http.ResponseWriter, r *http.Request) {
 	}
 	util.Res{Success: true, Message: "任务已取消"}.Write(w)
 }
+
+// DeleteTasks 删除任务（批量）
+func DeleteTasks(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
+	if r.Method != http.MethodPost {
+		util.Res{Success: false, Message: "不支持的请求方法"}.Write(w)
+		return
+	}
+	var taskIDs []int
+	err := json.NewDecoder(r.Body).Decode(&taskIDs)
+	if err != nil {
+		util.Res{Success: false, Message: "参数错误"}.Write(w)
+		return
+	}
+	db := store.MustGetDB()
+	defer db.Close()
+
+	for _, taskID := range taskIDs {
+		_task, err := store.GetTask(db, taskID)
+		if err == sql.ErrNoRows {
+			continue
+		}
+		if err != nil {
+			log.Printf("store.GetTask: %v", err)
+			continue
+		}
+		filePath := _task.FilePath()
+		err = os.Remove(filePath)
+		if err != nil && !os.IsNotExist(err) {
+			log.Printf("文件删除失败: %v", err)
+			continue
+		}
+		err = store.DeleteTask(db, taskID)
+		if err != nil {
+			log.Printf("store.DeleteTask: %v", err)
+			continue
+		}
+	}
+	util.Res{Success: true, Message: "删除成功"}.Write(w)
+}

@@ -1,7 +1,7 @@
 import van, { State } from 'vanjs-core'
 import { Route, goto, now } from 'vanjs-router'
 import { checkLogin, GLOBAL_HAS_LOGIN, GLOBAL_HIDE_PAGE, ResJSON, VanComponent } from '../mixin'
-import { deleteTask, getActiveTask, getTaskList, cancelTask } from './data'
+import { deleteTask, deleteTasks, getActiveTask, getTaskList, cancelTask } from './data'
 import { TaskInDB, TaskStatus } from '../work/type'
 import { LoadingBox } from '../view'
 import { PlayerModalComp } from './playerModal'
@@ -76,6 +76,18 @@ export class TaskRoute implements VanComponent {
                                     }).catch(error => alert(error.message))
                                 }
                             }, () => `取消选中 (${_that.selectedIds.val.size})`),
+                            button({
+                                class: 'btn btn-outline-danger btn-sm',
+                                hidden: () => !_that.hasSelectedTasks.val,
+                                onclick() {
+                                    const ids = Array.from(_that.selectedIds.val)
+                                    if (!confirm(`确定要删除选中的 ${ids.length} 个任务吗？`)) return
+                                    deleteTasks(ids).then(() => {
+                                        _that.taskList.val = _that.taskList.val.filter(t => !_that.selectedIds.val.has(t.id))
+                                        _that.selectedIds.val = new Set()
+                                    }).catch(error => alert(error.message))
+                                }
+                            }, () => `删除选中 (${_that.selectedIds.val.size})`),
                             button({
                                 class: 'btn btn-outline-danger btn-sm',
                                 hidden: () => !_that.hasRunningTasks.val,

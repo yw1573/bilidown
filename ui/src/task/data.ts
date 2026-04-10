@@ -68,6 +68,17 @@ export const deleteTask = async (id: number) => {
     if (!res.success) throw new Error(res.message)
 }
 
+export const deleteTasks = async (ids: number[]) => {
+    const res = await fetch('/api/deleteTasks', {
+        method: 'POST',
+        body: JSON.stringify(ids),
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    }).then(res => res.json()) as ResJSON
+    if (!res.success) throw new Error(res.message)
+}
+
 export const cancelTask = async (ids: number[]) => {
     const res = await fetch('/api/cancelTask', {
         method: 'POST',
