@@ -1,8 +1,8 @@
 import van from 'vanjs-core'
 import { Route, goto } from 'vanjs-router'
 import { checkLogin, GLOBAL_HAS_LOGIN, VanComponent } from '../mixin'
-import { SaveFolderSetting, FFmpegStatus } from './view'
-import { getFields, checkFFmpeg } from './data'
+import { SaveFolderSetting } from './view'
+import { getFields } from './data'
 import { LoadingBox } from '../view'
 
 const { button, div } = van.tags
@@ -16,11 +16,6 @@ export class SettingRoute implements VanComponent {
 
     fields = {
         download_folder: van.state('')
-    }
-
-    ffmpegStatus = {
-        available: van.state(false),
-        version: van.state('')
     }
 
     constructor() {
@@ -37,7 +32,6 @@ export class SettingRoute implements VanComponent {
                 return div(
                     () => _that.loading.val ? LoadingBox() : '',
                     () => _that.loading.val ? '' : div({ class: 'vstack gap-4' },
-                        FFmpegStatus(_that),
                         SaveFolderSetting(_that),
                         div({ class: 'hstack gap-3' },
                             button({
@@ -69,10 +63,6 @@ export class SettingRoute implements VanComponent {
                     for (const key in fields) {
                         _that.fields[key as keyof Fields].val = fields[key as keyof Fields]
                     }
-                })
-                checkFFmpeg().then(status => {
-                    _that.ffmpegStatus.available.val = status.available
-                    _that.ffmpegStatus.version.val = status.version
                     setTimeout(() => {
                         _that.loading.val = false
                     }, 200)

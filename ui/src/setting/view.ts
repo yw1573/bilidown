@@ -2,7 +2,7 @@ import van from 'vanjs-core'
 import { SettingRoute } from '.'
 import { saveFields } from './data'
 
-const { a, button, div, input, span } = van.tags
+const { button, div, input } = van.tags
 
 export const SaveFolderSetting = (route: SettingRoute) => {
     const saveFolder = route.fields.download_folder
@@ -30,21 +30,5 @@ export const SaveFolderSetting = (route: SettingRoute) => {
                 })
             }, disabled: folderPickerDisabled
         }, buttonText)
-    )
-}
-
-export const FFmpegStatus = (route: SettingRoute) => {
-    return div({ class: 'hstack gap-2' },
-        span({}, 'FFmpeg 状态:'),
-        () => route.ffmpegStatus.available.val
-            ? span({ class: 'badge bg-success' }, `已安装 (${route.ffmpegStatus.version.val})`)
-            : div({ class: 'hstack gap-2' },
-                span({ class: 'badge bg-danger' }, '未安装'),
-                a({
-                    class: 'badge bg-secondary text-decoration-none',
-                    href: 'https://www.ffmpeg.org/',
-                    target: '_blank'
-                }, '前往官网下载')
-            )
     )
 }
