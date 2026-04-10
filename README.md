@@ -114,5 +114,3 @@ bilidown/
 - [skip2/go-qrcode](https://github.com/skip2/go-qrcode) - QR 码生成
 
 ## 软件界面
-
-![](./docs/2024-11-05_090604.png)
