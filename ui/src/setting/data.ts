@@ -18,3 +18,9 @@ export const saveFields = async (fields: [string, string][]) => {
     if (!res.success) throw new Error(res.message)
     return res.message
 }
+
+export const checkFFmpeg = async (): Promise<{ available: boolean; version: string }> => {
+    const res = await fetch('/api/checkFFmpeg').then(res => res.json()) as ResJSON<{ available: boolean; version: string }>
+    if (!res.success) throw new Error(res.message)
+    return res.data
+}

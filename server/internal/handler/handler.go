@@ -31,5 +31,6 @@ func API() *http.ServeMux {
 	router.HandleFunc("/downloadVideo", video.DownloadVideo)
 	router.HandleFunc("/getSeasonsArchivesListFirstBvid", video.GetSeasonsArchivesListFirstBvid)
 	router.HandleFunc("/getFavList", video.GetFavList)
+	router.HandleFunc("/checkFFmpeg", setting.CheckFFmpeg)
 	return router
 }

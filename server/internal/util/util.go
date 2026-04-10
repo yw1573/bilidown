@@ -67,6 +67,22 @@ func GetFFmpegPath() (string, error) {
 	return "", errors.New("ffmpeg not found")
 }
 
+// GetFFmpegVersion 获取 FFmpeg 版本信息
+func GetFFmpegVersion() string {
+	cmd := exec.Command("ffmpeg", "-version")
+	output, err := cmd.Output()
+	if err != nil {
+		return ""
+	}
+	// 解析版本号，格式如: ffmpeg version 6.0 ...
+	re := regexp.MustCompile(`ffmpeg version (\S+)`)
+	matches := re.FindStringSubmatch(string(output))
+	if len(matches) > 1 {
+		return matches[1]
+	}
+	return ""
+}
+
 // GetRedirectedLocation 获取响应头中的 Location，不会自动跟随重定向。
 func GetRedirectedLocation(url string) (string, error) {
 	client := &http.Client{
