@@ -6,8 +6,10 @@ services:
     ports:
       - "8098:8098"
     volumes:
-      # 数据持久化：数据库和下载文件
-      - ./data:/app/data
+      # 数据库目录
+      - ./database:/app/database
+      # 下载文件目录
+      - ./download:/app/download
     environment:
       - TZ=Asia/Shanghai
     restart: unless-stopped

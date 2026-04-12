@@ -35,7 +35,7 @@ func GetDefaultDownloadFolder() (string, error) {
 		return "", err
 	}
 	execDir := filepath.Dir(execPath)
-	downloadDir := filepath.Join(execDir, "data", "download")
+	downloadDir := filepath.Join(execDir, "download")
 	if err := os.MkdirAll(downloadDir, os.ModePerm); err != nil {
 		return "", err
 	}
