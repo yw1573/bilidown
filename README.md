@@ -60,6 +60,48 @@ make fmt         # 格式化 Go 代码
 make test        # 运行测试
 ```
 
+## Docker 部署
+
+### 快速启动
+
+```bash
+# 克隆项目
+git clone https://github.com/yw1573/bilidown
+cd bilidown
+
+# 使用 docker-compose 启动
+docker-compose up -d
+
+# 访问 http://localhost:8098
+```
+
+### 目录映射
+
+| 容器目录 | 宿主机目录 | 说明 |
+|---------|-----------|------|
+| `/app/database` | `./database` | 数据库文件 |
+| `/app/download` | `./download` | 下载的视频文件 |
+
+### Docker 命令
+
+```bash
+# 构建镜像
+docker build -t bilidown:latest .
+
+# 运行容器
+docker run -d -p 8098:8098 \
+  -v ./database:/app/database \
+  -v ./download:/app/download \
+  --name bilidown \
+  bilidown:latest
+
+# 或使用 Makefile
+make docker-build   # 构建镜像
+make docker-run     # 启动容器
+make docker-logs    # 查看日志
+make docker-stop    # 停止容器
+```
+
 ## 发布流程
 
 项目使用 GitHub Actions + GoReleaser 自动构建发布：
