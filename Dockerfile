@@ -15,10 +15,6 @@ RUN npm install -g pnpm
 
 WORKDIR /app
 
-# 复制 go mod 文件
-COPY server/go.mod server/go.sum ./
-RUN go mod download
-
 # 复制前端代码
 COPY ui ./ui
 WORKDIR /app/ui
@@ -28,8 +24,8 @@ RUN pnpm install && pnpm build
 COPY server ./server
 WORKDIR /app/server
 
-# 构建后端（前端已输出到 server/internal/static/ui/）
-RUN go build -ldflags="-s -w" -o /bilidown ./cmd/bilidown
+# 下载依赖并构建
+RUN go mod download && go build -ldflags="-s -w" -o /bilidown ./cmd/bilidown
 
 # 运行阶段
 FROM alpine:3.19
