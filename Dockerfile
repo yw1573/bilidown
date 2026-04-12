@@ -15,17 +15,13 @@ RUN npm install -g pnpm
 
 WORKDIR /app
 
-# 复制前端代码
+# 复制前端代码并构建
 COPY ui ./ui
-WORKDIR /app/ui
-RUN pnpm install && pnpm build
+RUN cd ui && pnpm install && pnpm build
 
-# 复制后端代码
+# 复制后端代码并构建
 COPY server ./server
-WORKDIR /app/server
-
-# 下载依赖并构建
-RUN go mod download && go build -ldflags="-s -w" -o /bilidown ./cmd/bilidown
+RUN cd server && go mod download && go build -ldflags="-s -w" -o /bilidown ./cmd/bilidown
 
 # 运行阶段
 FROM alpine:3.19
