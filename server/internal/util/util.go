@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
@@ -29,7 +30,16 @@ func CheckBvidFormat(bvid string) bool {
 
 // GetDefaultDownloadFolder 获取默认下载路径
 func GetDefaultDownloadFolder() (string, error) {
-	return filepath.Abs("./download")
+	execPath, err := os.Executable()
+	if err != nil {
+		return "", err
+	}
+	execDir := filepath.Dir(execPath)
+	downloadDir := filepath.Join(execDir, "data", "download")
+	if err := os.MkdirAll(downloadDir, os.ModePerm); err != nil {
+		return "", err
+	}
+	return downloadDir, nil
 }
 
 func IsNumber(str string) bool {

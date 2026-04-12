@@ -12,7 +12,7 @@ import (
 
 var SqliteLock sync.Mutex
 
-// MustGetDB 获取数据库连接，数据库路径默认为二进制文件所在目录下的 data.db
+// MustGetDB 获取数据库连接，数据库路径默认为二进制文件所在目录下的 data/data.db
 func MustGetDB(path ...string) *sql.DB {
 	var pathStr string
 	if len(path) == 0 {
@@ -22,7 +22,12 @@ func MustGetDB(path ...string) *sql.DB {
 			log.Fatalln("os.Executable:", err)
 		}
 		execDir := filepath.Dir(execPath)
-		pathStr = filepath.Join(execDir, "data.db")
+		dataDir := filepath.Join(execDir, "data")
+		// 确保 data 目录存在
+		if err := os.MkdirAll(dataDir, os.ModePerm); err != nil {
+			log.Fatalln("创建 data 目录失败:", err)
+		}
+		pathStr = filepath.Join(dataDir, "data.db")
 	} else {
 		pathStr = path[0]
 	}
