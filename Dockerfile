@@ -1,6 +1,9 @@
 # 构建阶段
 FROM golang:1.24-alpine AS builder
 
+# 设置 Alpine 镜像源
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
+
 # 安装构建依赖
 RUN apk add --no-cache git nodejs npm pnpm ffmpeg
 
@@ -24,6 +27,9 @@ RUN go build -ldflags="-s -w" -o /bilidown ./cmd/bilidown
 
 # 运行阶段
 FROM alpine:3.19
+
+# 设置 Alpine 镜像源
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
 
 # 安装运行时依赖
 RUN apk add --no-cache ffmpeg ca-certificates tzdata
