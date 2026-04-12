@@ -42,17 +42,7 @@ export default () => {
                     class: 'badge bg-danger text-decoration-none',
                     href: 'https://www.ffmpeg.org/',
                     target: '_blank'
-                }, 'FFmpeg 未安装'),
-            button({
-                class: 'btn btn-outline-secondary btn-sm',
-                onclick() {
-                    if (!confirm('确定要关闭软件吗?')) return
-                    fetch('/api/quit').then(res => res.json()).then(res => {
-                        if (!res.success) alert(res.message)
-                        else document.write(`<h2 style="text-align: center; padding: 30px 20px;">软件已关闭</h2>`)
-                    })
-                }
-            }, '关闭软件')
+                }, 'FFmpeg 未安装')
         )
     )
 }
