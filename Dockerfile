@@ -4,6 +4,9 @@ FROM golang:1.23-alpine AS builder
 # 设置 Alpine 镜像源
 RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
 
+# 设置 Go 模块代理
+ENV GOPROXY=https://goproxy.cn,direct
+
 # 安装构建依赖
 RUN apk add --no-cache git nodejs npm ffmpeg
 
