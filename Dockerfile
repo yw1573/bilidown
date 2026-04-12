@@ -5,7 +5,10 @@ FROM golang:1.24-alpine AS builder
 RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
 
 # 安装构建依赖
-RUN apk add --no-cache git nodejs npm pnpm ffmpeg
+RUN apk add --no-cache git nodejs npm ffmpeg
+
+# 安装 pnpm
+RUN npm install -g pnpm
 
 WORKDIR /app
 
