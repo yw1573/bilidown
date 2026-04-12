@@ -1,0 +1,36 @@
+# 依赖目录
+ui/node_modules/
+ui/.pnpm-store/
+
+# 构建产物
+build/
+server/internal/static/ui/
+
+# 开发文件
+*.log
+*.tmp
+.env
+.env.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Git
+.git/
+.gitignore
+
+# Docker
+Dockerfile
+.dockerignore
+docker-compose.yml
+
+# 文档
+docs/
+*.md
+!README.md
+
+# 测试
+server/**/*_test.go

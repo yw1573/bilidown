@@ -1,0 +1,15 @@
+services:
+  bilidown:
+    build: .
+    image: bilidown:latest
+    container_name: bilidown
+    ports:
+      - "8098:8098"
+    volumes:
+      # 数据持久化：数据库文件
+      - ./data/bilidown.db:/app/data.db
+      # 下载文件目录
+      - ./downloads:/app/download
+    environment:
+      - TZ=Asia/Shanghai
+    restart: unless-stopped

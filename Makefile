@@ -101,4 +101,25 @@ help:
 	@echo "  build-darwin-arm64  - Cross-compile for macOS ARM64"
 	@echo "  build-windows    - Cross-compile for Windows"
 	@echo "  build-all        - Build for all platforms"
+	@echo "  docker-build     - Build Docker image"
+	@echo "  docker-run       - Run Docker container"
 	@echo "  help             - Show this help message"
+
+# Docker 构建
+docker-build:
+	@echo "Building Docker image..."
+	docker build -t bilidown:latest .
+
+# Docker 运行
+docker-run:
+	@echo "Running Docker container..."
+	docker-compose up -d
+
+# Docker 停止
+docker-stop:
+	@echo "Stopping Docker container..."
+	docker-compose down
+
+# Docker 日志
+docker-logs:
+	docker-compose logs -f
